@@ -1,5 +1,7 @@
 # TH_Drugs
 
+# Images For Inventory - https://drive.google.com/drive/folders/12Bn3XsJAf9CbXfKD5adH7e9Jq-bysKXW?usp=sharing
+
 # Drug System
 
 A comprehensive drug system for QBox featuring harvesting, processing, meth cooking in RVs, moonshine distilling, crack production, and XP-based progression.
