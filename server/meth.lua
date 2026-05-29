@@ -49,35 +49,41 @@ lib.callback.register("drugs:server:completeMethStage", function(source, stage, 
     end
     
     if not success then
-        local vehicle = NetworkGetEntityFromNetworkId(cook.vehicleNetId)
-        if DoesEntityExist(vehicle) then
-            local coords = GetEntityCoords(vehicle)
-            AddExplosion(coords.x, coords.y, coords.z, 29, Config.Meth.ExplosionDamage, true, false, 0.5)
-        end
-        
-        exports.ox_inventory:RemoveItem(source, "meth_kit", 1)
-        exports.ox_inventory:RemoveItem(source, "meth_cooler", 1)
-        
         ActiveCooks[source] = nil
         
-        local policeJobs = Config.Police.Jobs
-        local alertData = {
-            job_table = policeJobs,
-            coords = coords,
-            title = "10-70 - Explosion",
-            message = "Explosion reported at location",
-            flash = true,
-            blip = {
-                sprite = 445,
-                scale = 1.5,
-                colour = 1,
-                flashes = true,
-                text = "Explosion"
+        if math.random() <= Config.Meth.ExplosionChance then
+            local vehicle = NetworkGetEntityFromNetworkId(cook.vehicleNetId)
+            local coords = nil
+            if DoesEntityExist(vehicle) then
+                coords = GetEntityCoords(vehicle)
+                AddExplosion(coords.x, coords.y, coords.z, 29, Config.Meth.ExplosionDamage, true, false, 0.5)
+            end
+            
+            exports.ox_inventory:RemoveItem(source, "meth_kit", 1)
+            exports.ox_inventory:RemoveItem(source, "meth_cooler", 1)
+            
+            local policeJobs = Config.Police.Jobs
+            local alertData = {
+                job_table = policeJobs,
+                coords = coords,
+                title = "10-70 - Explosion",
+                message = "Explosion reported at location",
+                flash = true,
+                blip = {
+                    sprite = 445,
+                    scale = 1.5,
+                    colour = 1,
+                    flashes = true,
+                    text = "Explosion"
+                }
             }
-        }
-        TriggerEvent("cd_dispatch:AddNotification", alertData)
-        
-        return false, "EXPLOSION"
+            TriggerEvent("cd_dispatch:AddNotification", alertData)
+            
+            return false, "EXPLOSION"
+        else
+            lib.notify(source, { title = "Meth", description = "Process failed but avoided explosion. Try again.", type = "warning" })
+            return false, "FAILED"
+        end
     end
     
     cook.stage = stage + 1
