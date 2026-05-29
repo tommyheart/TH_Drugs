@@ -1,126 +1,79 @@
-local ActiveCooks = {}
+local ActiveProcesses = {}
 
-lib.callback.register("drugs:server:startMethCook", function(source, vehicleNetId)
+lib.callback.register("drugs:server:harvestAcetone", function(source, zoneName)
     local Player = exports.qbx_core:GetPlayer(source)
-    if not Player then return false end
+    if not Player then return false, "Player not found" end
     
-    if ActiveCooks[source] then
-        return false, "You are already cooking"
-    end
-    
-    local hasKit = exports.ox_inventory:GetItem(source, "meth_kit", nil, true)
-    local hasCooler = exports.ox_inventory:GetItem(source, "meth_cooler", nil, true)
-    local hasPseudo = exports.ox_inventory:GetItem(source, "pseudoephedrine", nil, true)
-    local hasRedPowder = exports.ox_inventory:GetItem(source, "meth_redpowder", nil, true)
-    local hasLithium = exports.ox_inventory:GetItem(source, "meth_lithium", nil, true)
-    
-    if not hasKit or hasKit < 1 then
-        return false, "You need a lab kit"
-    end
-    if not hasCooler or hasCooler < 1 then
-        return false, "You need a meth cooler"
-    end
-    if not hasPseudo or hasPseudo < 1 then
-        return false, "You need pseudoephedrine"
-    end
-    if not hasRedPowder or hasRedPowder < 1 then
-        return false, "You need red phosphorus"
-    end
-    if not hasLithium or hasLithium < 1 then
-        return false, "You need lithium strips"
+    local amount = math.random(Config.Meth.HarvestZones[1].amount.min, Config.Meth.HarvestZones[1].amount.max)
+    for _, zone in ipairs(Config.Meth.HarvestZones) do
+        if zone.name == zoneName then
+            amount = math.random(zone.amount.min, zone.amount.max)
+            break
+        end
     end
     
-    ActiveCooks[source] = {
-        vehicleNetId = vehicleNetId,
-        startTime = os.time(),
-        stage = 1
+    exports.ox_inventory:AddItem(source, "acetone", amount)
+    
+    if Config.Debug then
+        print("[Meth Debug] Player", source, "harvested", amount, "acetone at", zoneName)
+    end
+    
+    return true
+end)
+
+lib.callback.register("drugs:server:startMethProcess", function(source, locationName)
+    local Player = exports.qbx_core:GetPlayer(source)
+    if not Player then return false, "Player not found" end
+    
+    if ActiveProcesses[source] then
+        return false, "Already processing"
+    end
+    
+    for _, tool in ipairs(Config.Meth.Tools) do
+        local hasTool = exports.ox_inventory:GetItem(source, tool, nil, true)
+        if not hasTool or hasTool < 1 then
+            return false, "You need a " .. exports.ox_inventory:Items(tool).label
+        end
+    end
+    
+    for _, ingredient in ipairs(Config.Meth.Ingredients) do
+        local hasItem = exports.ox_inventory:GetItem(source, ingredient.item, nil, true)
+        if not hasItem or hasItem < ingredient.amount then
+            return false, "You need " .. ingredient.amount .. "x " .. exports.ox_inventory:Items(ingredient.item).label
+        end
+    end
+    
+    ActiveProcesses[source] = {
+        location = locationName,
+        startTime = os.time()
     }
     
     return true
 end)
 
-lib.callback.register("drugs:server:completeMethStage", function(source, stage, success)
+lib.callback.register("drugs:server:completeMethProcess", function(source, locationName)
     local Player = exports.qbx_core:GetPlayer(source)
-    if not Player then return false end
+    if not Player then return false, "Player not found" end
     
-    local cook = ActiveCooks[source]
-    if not cook then
-        return false, "No active cook session"
+    local process = ActiveProcesses[source]
+    if not process then
+        return false, "No active process"
     end
     
-    if not success then
-        ActiveCooks[source] = nil
-        
-        if math.random() <= Config.Meth.ExplosionChance then
-            local vehicle = NetworkGetEntityFromNetworkId(cook.vehicleNetId)
-            local coords = nil
-            if DoesEntityExist(vehicle) then
-                coords = GetEntityCoords(vehicle)
-                AddExplosion(coords.x, coords.y, coords.z, 29, Config.Meth.ExplosionDamage, true, false, 0.5)
-            end
-            
-            exports.ox_inventory:RemoveItem(source, "meth_kit", 1)
-            exports.ox_inventory:RemoveItem(source, "meth_cooler", 1)
-            
-            local policeJobs = Config.Police.Jobs
-            local alertData = {
-                job_table = policeJobs,
-                coords = coords,
-                title = "10-70 - Explosion",
-                message = "Explosion reported at location",
-                flash = true,
-                blip = {
-                    sprite = 445,
-                    scale = 1.5,
-                    colour = 1,
-                    flashes = true,
-                    text = "Explosion"
-                }
-            }
-            TriggerEvent("cd_dispatch:AddNotification", alertData)
-            
-            return false, "EXPLOSION"
-        else
-            lib.notify(source, { title = "Meth", description = "Process failed but avoided explosion. Try again.", type = "warning" })
-            return false, "FAILED"
-        end
+    for _, ingredient in ipairs(Config.Meth.Ingredients) do
+        exports.ox_inventory:RemoveItem(source, ingredient.item, ingredient.amount)
     end
     
-    cook.stage = stage + 1
-    
-    if cook.stage > 4 then
-        exports.ox_inventory:RemoveItem(source, "pseudoephedrine", 1)
-        exports.ox_inventory:RemoveItem(source, "meth_redpowder", 1)
-        exports.ox_inventory:RemoveItem(source, "meth_lithium", 1)
-        
-        local amount = math.random(Config.Meth.SuccessAmount.min, Config.Meth.SuccessAmount.max)
-        exports.ox_inventory:AddItem(source, "meth", amount)
-        
-        ActiveCooks[source] = nil
-        
-        return true, "COMPLETE", amount
-    end
-    
-    return true
-end)
-
-lib.callback.register("drugs:server:finishMethCook", function(source)
-    local Player = exports.qbx_core:GetPlayer(source)
-    if not Player then return false end
-    
-    local cook = ActiveCooks[source]
-    if not cook then
-        return false, "No active cook session"
-    end
-    
-    local amount = math.random(Config.Meth.SuccessAmount.min, Config.Meth.SuccessAmount.max)
+    local amount = math.random(Config.Meth.BatchAmount.min, Config.Meth.BatchAmount.max)
     exports.ox_inventory:AddItem(source, "meth", amount)
     
-    exports.ox_inventory:RemoveItem(source, "pseudoephedrine", 1)
-    exports.ox_inventory:RemoveItem(source, "meth_redpowder", 1)
-    exports.ox_inventory:RemoveItem(source, "meth_lithium", 1)
+    exports["" .. GetCurrentResourceName() .. ""]:LogProcessing(source, "meth", locationName, amount)
     
-    ActiveCooks[source] = nil
-    
-    return true, amount
+    ActiveProcesses[source] = nil
+    return true, "COMPLETE", amount
+end)
+
+lib.callback.register("drugs:server:cancelMethProcess", function(source)
+    ActiveProcesses[source] = nil
+    return true
 end)
