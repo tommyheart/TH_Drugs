@@ -49,12 +49,6 @@ local Items = {
         stack = false,
         description = "Equipment for meth cooking"
     },
-    ["meth_cooler"] = {
-        label = "Meth Cooler",
-        weight = 5000,
-        stack = false,
-        description = "Cooling equipment for meth"
-    },
     ["meth"] = {
         label = "Meth",
         weight = 100,
@@ -126,6 +120,11 @@ local Items = {
         label = "Coca Powder",
         weight = 100,
         description = "Refined cocaine powder"
+    },
+    ["acetone"] = {
+        label = "Acetone",
+        weight = 500,
+        description = "Industrial solvent for chemical processes"
     }
 }
 
