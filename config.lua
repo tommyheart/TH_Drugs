@@ -70,19 +70,24 @@ Config.Cocaine = {
 }
 
 Config.Meth = {
-    SkillCheckCount = 40,
-    SkillCheckSpeeds = { "easy", "medium" },
-    SkillCheckKeys = { "1", "2", "3", "4" },
-    ExplosionChance = 0.5,
-    ExplosionDamage = 100,
-    ExplosionRadius = 15.0,
-    SuccessAmount = { min = 20, max = 40 },
-    Vehicles = {
-        `journey`,
-        `camper`
+    ProcessingTime = 60,
+    BatchAmount = { min = 10, max = 20 },
+    Ingredients = {
+        { item = "acetone", amount = 2 },
+        { item = "pseudoephedrine", amount = 2 },
+        { item = "meth_lithium", amount = 3 },
+        { item = "meth_redpowder", amount = 1 }
     },
-    BackSeatIndex = 0,
-    SmokeParticle = "scr_prop_scrub_bsmoke"
+    Tools = { "meth_kit" },
+    HarvestZones = {
+        { coords = vector3(1250.0, -3100.0, 30.0), radius = 3.0, name = "Port of LS Warehouse", amount = { min = 1, max = 3 }, cooldown = 600, label = "Siphon Acetone" },
+        { coords = vector3(-150.0, -1600.0, 35.0), radius = 3.0, name = "Del Perro Industrial", amount = { min = 1, max = 3 }, cooldown = 600, label = "Siphon Acetone" }
+    },
+    ProcessingLocations = {
+        { coords = vector3(978.12, -145.89, 74.0), radius = 2.0, name = "Braddock Pass Lab" },
+        --{ coords = vector3(-680.45, -2450.33, 13.0), radius = 2.0, name = "Airport Warehouse" },
+        --{ coords = vector3(2830.11, -1450.78, 23.0), radius = 2.0, name = "Senora Desert Lab" }
+    }
 }
 
 Config.Crack = {
