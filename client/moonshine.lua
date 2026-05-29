@@ -87,7 +87,7 @@ function StartMoonshineCraft(locationIndex)
         useWhileDead = false,
         canCancel = true,
         disable = { move = true, car = true, combat = true },
-        anim = { dict = 'timetable@chef@fill_dish', clip = 'plate_up' }
+        anim = { dict = 'timetable@ron@ig_4_smoking_meth', clip = 'chefiscookingup' }
     }) then
         lib.notify({ title = 'Moonshine', description = 'Crafted ' .. result .. ' bottles of Moonshine!', type = 'success' })
     else
