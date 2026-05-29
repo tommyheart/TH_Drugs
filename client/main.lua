@@ -1,0 +1,1 @@
+print("[drugs] Client initialized")
